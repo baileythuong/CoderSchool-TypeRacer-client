@@ -4,6 +4,7 @@ import Clock from "./components/Clock";
 import Footer from "./components/Footer";
 import TextInput from "./components/TextInput";
 import TextDisplay from "./components/TextDisplay";
+import Score from "./components/Score";
 
 require("./sass/app.scss");
 require("./font-awesome/css/font-awesome.css");
@@ -16,20 +17,39 @@ class App extends React.Component {
       wpm: 0,
       index: 0,
       value: "",
-      token: "",
+      token: "222",
       error: false,
       errorCount: 0,
       timeElapsed: 0,
       lineView: false,
       startTime: null,
       completed: false,
-      excerpt: this._randomElement(this.props.excerpts)
+      excerpt: this._randomElement(this.props.excerpts),
+      score: []
     };
   }
 
   async componentDidMount() {
     this.intervals = [];
-    this.setupCurrentUser();
+    this.getExcerpts();
+    this.getScores();
+    // this.setupCurrentUser();
+  }
+
+  getExcerpts = async () => {
+    const response = await fetch('https://127.0.0.1:5000');
+    const data = await response.json();
+    console.log('data', data);
+    
+  }
+
+  getScores = async () => {
+    const response = await fetch('https://127.0.0.1:5000/scores');
+    const data = await response.json();
+    console.log('score', data);
+    this.setState({
+      score: data.data
+    })
   }
 
   setupCurrentUser = () => {
@@ -46,7 +66,8 @@ class App extends React.Component {
       sessionStorage.setItem("token", accessToken);
     }
     this.setState({
-      token: existingToken || accessToken
+      // token: existingToken || accessToken
+      token: "abcdef"
     });
   };
 
@@ -137,7 +158,7 @@ class App extends React.Component {
   };
 
   postScore = async (wpm, elapsed) => {
-    const resp = await fetch("https://127.0.0.1:5000/scores", {
+    const response = await fetch("https://127.0.0.1:5000/scores", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -149,8 +170,10 @@ class App extends React.Component {
         errorCount: this.state.errorCount
       })
     });
-    const data = await resp.json();
-    if (data.code === 200) {
+    const data = await response.json();
+    console.log(response)
+    if (response.ok) {
+      console.log(data)
     } else {
       this.setState({ error: "Could not post score" });
     }
@@ -161,7 +184,7 @@ class App extends React.Component {
     let wpm;
     if (this.state.completed) {
       wpm = (this.state.excerpt.split(" ").length / (elapsed / 1000)) * 60;
-      // this.postScore(wpm, elapsed);
+      this.postScore(wpm, elapsed);
     } else {
       let words = this.state.excerpt.slice(0, this.state.index).split(" ")
         .length;
@@ -215,17 +238,19 @@ class App extends React.Component {
   render() {
     return (
       <>
+            {console.log(this.state.score)}
+        <Score score={this.state.score}/>
         <div className="header">
           <h1>Type Racing</h1>
           <i onClick={this._restartGame} className="fa fa-lg fa-refresh"></i>
           <i className="fa fa-lg fa-bars" onClick={this._changeView}></i>
-          {this.state.token && this.state.token.length > 3 ? (
+          {this.state.token && this.state.token.length > 1 ? (
             <div>Sign Out</div>
           ) : (
             <div> Sign In</div>
           )}
         </div>
-        {this.state.token && this.state.token.length > 3 ? this.renderGame() : this.renderSignin()} 
+        {this.state.token && this.state.token.length > 1 ? this.renderGame() : this.renderSignin()} 
         <Footer />
       </>
     );

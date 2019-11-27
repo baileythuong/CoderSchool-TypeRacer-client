@@ -15,7 +15,7 @@ class TextInput extends React.Component {
           ref="textInput"
           value={this.props.value}
           onChange={this.handleChange}
-          placeholder="Start typing.."
+          placeholder="Start typing..."
           className={this.props.error ? "error" : ""}
         />
       </div>
